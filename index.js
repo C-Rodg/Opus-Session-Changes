@@ -256,6 +256,7 @@ const startOpusCompare = async () => {
 					newSessions,
 					oldSessionObject
 				);
+
 				// See if anything has changed..
 				if (
 					sessionDiffs.editedSessions.length === 0 &&
@@ -265,9 +266,11 @@ const startOpusCompare = async () => {
 					console.log("No session changes detected...");
 					return false;
 				}
-				// Calculate the most recent modified time
-				const mostRecentTime = getMostRecentTime(newSessions);
-				console.log(mostRecentTime.format(MODIFIED_DATE_FORMAT));
+
+				// Calculate the most recent modified time from response
+				const mostRecentTime = getMostRecentTime(
+					opusSessionResponse.data.result
+				);
 
 				// Create format to send by email
 				const emailObj = generateEmailBody(sessionDiffs);
@@ -293,4 +296,4 @@ const startOpusCompare = async () => {
 	}
 };
 
-startOpusCompare();
+setInterval(startOpusCompare, TIME_BETWEEN_PULLS);
