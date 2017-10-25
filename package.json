@@ -1,0 +1,25 @@
+{
+  "name": "api-opus-session-changes",
+  "version": "1.0.0",
+  "description": "A nodejs script to pull session changes from the Opus API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/C-Rodg/Opus-Session-Changes.git"
+  },
+  "keywords": [
+    "Opus",
+    "API",
+    "nodejs",
+    "email"
+  ],
+  "author": "C-Rodg",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/C-Rodg/Opus-Session-Changes/issues"
+  },
+  "homepage": "https://github.com/C-Rodg/Opus-Session-Changes#readme"
+}
