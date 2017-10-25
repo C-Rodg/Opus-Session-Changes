@@ -24,6 +24,7 @@
   "homepage": "https://github.com/C-Rodg/Opus-Session-Changes#readme",
   "dependencies": {
     "axios": "^0.17.0",
+    "moment": "^2.19.1",
     "nodemailer": "^4.3.1"
   }
 }
