@@ -21,17 +21,17 @@ const OPUS_SESSION_URL = "https://api.opus.agency/api/1.4/getEventSessions",
 	];
 
 let firstPull = true,
-	lastModifiedTime = "",
+	lastModifiedTime = null,
 	oldSessionObject = {};
 
 // Generate email object to send to smtp service
-const generateMailObject = () => {
+const generateMailObject = emailObj => {
 	return {
 		from: config.emailFrom,
 		to: config.emailTo,
 		subject: config.subject,
-		text: "",
-		html: ""
+		text: emailObj.text,
+		html: emailObj.html
 	};
 };
 
@@ -42,7 +42,9 @@ const generatePostBody = () => {
 		event_id: config.opusEventId
 	};
 	if (lastModifiedTime) {
-		obj.filter = `modified_date_time > ${lastModifiedTime}`;
+		obj.filter = `modified_date_time > ${lastModifiedTime.format(
+			FILTER_DATE_FORMAT
+		)}`;
 	}
 	return obj;
 };
@@ -124,6 +126,7 @@ const compareNewOldSessions = (newSessions, oldSessions) => {
 			if (newSessions[sessionId][field] !== oldSessions[sessionId][field]) {
 				editedSessions.push(
 					generateEditedSessionObject(
+						sessionId,
 						field,
 						oldSessions[sessionId][field],
 						newSessions[sessionId][field]
@@ -140,8 +143,14 @@ const compareNewOldSessions = (newSessions, oldSessions) => {
 };
 
 // Generate object to push to edited sessions
-const generateEditedSessionObject = (fieldname, prevValue, nowValue) => {
+const generateEditedSessionObject = (
+	sessionId,
+	fieldname,
+	prevValue,
+	nowValue
+) => {
 	return {
+		sessionId,
 		fieldname,
 		prevValue,
 		nowValue
@@ -152,7 +161,9 @@ const generateEditedSessionObject = (fieldname, prevValue, nowValue) => {
 const generateEmailBody = edits => {
 	let addedMsgs = [],
 		removedMsgs = [],
-		editsMsgs = [];
+		editsMsgs = [],
+		msgText = "",
+		msgHTML = "";
 
 	if (edits.addedSessions.length > 0) {
 		edits.addedSessions.forEach(addedSession => {
@@ -169,6 +180,60 @@ const generateEmailBody = edits => {
 			);
 		});
 	}
+
+	if (edits.editedSessions.length > 0) {
+		edits.editedSessions.forEach(edit => {
+			editsMsgs.push(
+				`Session ID: ${edit.sessionId}| ${edit.fieldname} has changed from ${edit.prevValue} to ${edit.nowValue}.`
+			);
+		});
+	}
+
+	const d = moment();
+	msgText = `Changes from ${d.format("h:mm a, MMM Do, YYYY")}\n\n`;
+	msgHTML = `<h1>${msgText}</h1>`;
+	if (addedMsgs.length > 0) {
+		// Add titles
+		msgText += `${addedMsgs.length} ADDED SESSIONS:\n`;
+		msgHTML += `<div><h2>${addedMsgs.length} ADDED SESSIONS:</h2>`;
+		// Add additional session list
+		msgText += addedMsgs.join("\n") + "\n\n";
+		msgHTML += "<p>" + addedMsgs.join("</p><p>") + "</p></div>";
+	}
+	if (removedMsgs.length > 0) {
+		msgText += `${removedMsgs.length} REMOVED SESSIONS:\n`;
+		msgHTML += `<div><h2>${removedMsgs.length} REMOVED SESSIONS:</h2>`;
+		msgText += removedMsgs.join("\n") + "\n\n";
+		msgHTML += "<p>" + removedMsgs.join("</p><p>") + "</p></div>";
+	}
+	if (editsMsgs.length > 0) {
+		msgText += `${editsMsgs.length} EDITS:\n`;
+		msgText += editsMsgs.join("\n") + "\n\n";
+		msgHTML += `<div><h2>${editsMsgs.length} EDITS:</h2>`;
+		msgHTML += "<p>" + editsMsgs.join("</p><p>") + "</p></div>";
+	}
+	return {
+		text: msgText,
+		html: msgHTML
+	};
+};
+
+// Calculate most recent last modified time
+const getMostRecentTime = sessions => {
+	let mostRecent = null;
+	sessions.forEach(session => {
+		if (!mostRecent) {
+			mostRecent = moment(session.modified_date_time, MODIFIED_DATE_FORMAT);
+		}
+		if (
+			mostRecent.isBefore(
+				moment(session.modified_date_time, MODIFIED_DATE_FORMAT)
+			)
+		) {
+			mostRecent = moment(session.modified_date_time, MODIFIED_DATE_FORMAT);
+		}
+	});
+	return mostRecent;
 };
 
 // Start the compare
@@ -191,13 +256,33 @@ const startOpusCompare = async () => {
 					newSessions,
 					oldSessionObject
 				);
-				console.log(sessionDiffs.editedSessions);
-				// Create format to send by email
+				// See if anything has changed..
+				if (
+					sessionDiffs.editedSessions.length === 0 &&
+					sessionDiffs.addedSessions.length === 0 &&
+					sessionDiffs.removedSessions.length === 0
+				) {
+					console.log("No session changes detected...");
+					return false;
+				}
+				// Calculate the most recent modified time
+				const mostRecentTime = getMostRecentTime(newSessions);
+				console.log(mostRecentTime.format(MODIFIED_DATE_FORMAT));
 
-				// On success, get most recent last modified time
-				// then assign oldSessionsObject as the newSessions
+				// Create format to send by email
+				const emailObj = generateEmailBody(sessionDiffs);
+				// Send email - assign newSessions to oldSessions and assign lastModifiedTime
+				transporter.sendMail(generateMailObject(emailObj), (err, response) => {
+					if (err) {
+						throw new Error(err);
+					} else {
+						console.log("Successfully sent email about changes..");
+						lastModifiedTime = mostRecentTime;
+						oldSessionObject = newSessions;
+					}
+				});
 			} else {
-				console.log("No session changes...");
+				console.log("No sessions returned...");
 				return false;
 			}
 		} else {
