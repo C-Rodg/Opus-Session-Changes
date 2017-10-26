@@ -42,9 +42,9 @@ const generatePostBody = () => {
 		event_id: config.opusEventId
 	};
 	if (lastModifiedTime) {
-		obj.filter = `modified_date_time > ${lastModifiedTime.format(
-			FILTER_DATE_FORMAT
-		)}`;
+		const filterDate = lastModifiedTime.format(FILTER_DATE_FORMAT);
+		obj.filter = `modified_date_time > ${filterDate}`;
+		console.log(`Pulling sessions with modified_date_time > ${filterDate}`);
 	}
 	return obj;
 };
@@ -270,6 +270,18 @@ const startOpusCompare = async () => {
 				// Calculate the most recent modified time from response
 				const mostRecentTime = getMostRecentTime(
 					opusSessionResponse.data.result
+				);
+
+				// Display what has changed
+				console.log(
+					`New most recent time is: ${mostRecentTime.format(
+						MODIFIED_DATE_FORMAT
+					)}`
+				);
+				console.log(
+					`${sessionDiffs.editedSessions.length} edits; ${sessionDiffs
+						.addedSessions
+						.length} added sessions; ${sessionDiffs.removedSessions} removed sessions`
 				);
 
 				// Create format to send by email
