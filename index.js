@@ -168,7 +168,7 @@ const generateEmailBody = edits => {
 	if (edits.addedSessions.length > 0) {
 		edits.addedSessions.forEach(addedSession => {
 			addedMsg.push(
-				`Session ID: ${addedSession.session_id}|Session Name: ${addedSession.session_name}|Start Date: ${addedSession.session_start_date_time}|End Date: ${addedSession.session_end_date_time}|Group Name: ${addedSession.group_name}|Room: ${addedSession.room_name}|Status: ${addedSession.session_status}`
+				`Session ID: ${addedSession.session_id} | Session Name: ${addedSession.session_name}|Start Date: ${addedSession.session_start_date_time}|End Date: ${addedSession.session_end_date_time}|Group Name: ${addedSession.group_name}|Room: ${addedSession.room_name}|Status: ${addedSession.session_status}`
 			);
 		});
 	}
@@ -176,7 +176,7 @@ const generateEmailBody = edits => {
 	if (edits.removedSessions.length > 0) {
 		edits.removedSessions.forEach(removedSession => {
 			removedMsgs.push(
-				`Session ID: ${removedSession.session_id}|Session Name: ${removedSession.session_name}|Start Date: ${removedSession.session_start_date_time}|End Date: ${removedSession.session_end_date_time}|Group Name: ${removedSession.group_name}|Room: ${removedSession.room_name}|Status: ${removedSession.session_status}`
+				`Session ID: ${removedSession.session_id} | Session Name: ${removedSession.session_name}|Start Date: ${removedSession.session_start_date_time}|End Date: ${removedSession.session_end_date_time}|Group Name: ${removedSession.group_name}|Room: ${removedSession.room_name}|Status: ${removedSession.session_status}`
 			);
 		});
 	}
@@ -184,7 +184,7 @@ const generateEmailBody = edits => {
 	if (edits.editedSessions.length > 0) {
 		edits.editedSessions.forEach(edit => {
 			editsMsgs.push(
-				`Session ID: ${edit.sessionId}| ${edit.fieldname} has changed from ${edit.prevValue} to ${edit.nowValue}.`
+				`Session ID: ${edit.sessionId} | ${edit.fieldname} has changed from ${edit.prevValue} to ${edit.nowValue}.`
 			);
 		});
 	}
@@ -280,8 +280,8 @@ const startOpusCompare = async () => {
 				);
 				console.log(
 					`${sessionDiffs.editedSessions.length} edits; ${sessionDiffs
-						.addedSessions
-						.length} added sessions; ${sessionDiffs.removedSessions} removed sessions`
+						.addedSessions.length} added sessions; ${sessionDiffs
+						.removedSessions.length} removed sessions`
 				);
 
 				// Create format to send by email
