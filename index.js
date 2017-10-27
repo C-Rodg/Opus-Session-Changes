@@ -21,7 +21,6 @@ const OPUS_SESSION_URL = "https://api.opus.agency/api/1.4/getEventSessions",
 	];
 
 let firstPull = true,
-	lastModifiedTime = null,
 	oldSessionObject = {};
 
 // Generate email object to send to smtp service
@@ -41,11 +40,6 @@ const generatePostBody = () => {
 		clientGUID: config.opusGuid,
 		event_id: config.opusEventId
 	};
-	if (lastModifiedTime) {
-		const filterDate = lastModifiedTime.format(FILTER_DATE_FORMAT);
-		obj.filter = `modified_date_time > ${filterDate}`;
-		console.log(`Pulling sessions with modified_date_time > ${filterDate}`);
-	}
 	return obj;
 };
 
@@ -167,7 +161,7 @@ const generateEmailBody = edits => {
 
 	if (edits.addedSessions.length > 0) {
 		edits.addedSessions.forEach(addedSession => {
-			addedMsg.push(
+			addedMsgs.push(
 				`Session ID: ${addedSession.session_id} | Session Name: ${addedSession.session_name}|Start Date: ${addedSession.session_start_date_time}|End Date: ${addedSession.session_end_date_time}|Group Name: ${addedSession.group_name}|Room: ${addedSession.room_name}|Status: ${addedSession.session_status}`
 			);
 		});
@@ -286,13 +280,12 @@ const startOpusCompare = async () => {
 
 				// Create format to send by email
 				const emailObj = generateEmailBody(sessionDiffs);
-				// Send email - assign newSessions to oldSessions and assign lastModifiedTime
+				// Send email - assign newSessions to oldSessions
 				transporter.sendMail(generateMailObject(emailObj), (err, response) => {
 					if (err) {
 						throw new Error(err);
 					} else {
 						console.log("Successfully sent email about changes..");
-						lastModifiedTime = mostRecentTime;
 						oldSessionObject = newSessions;
 					}
 				});
